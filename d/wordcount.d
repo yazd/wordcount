@@ -1,39 +1,58 @@
 import std.stdio;
 import std.algorithm;
 import std.typecons : Tuple;
+import std.utf;
 
-alias WordInfo = Tuple!(string, int);
+import std.experimental.allocator : makeArray;
+import std.experimental.allocator.mallocator : Mallocator;
+import std.experimental.allocator.building_blocks.allocator_list : AllocatorList;
+import std.experimental.allocator.building_blocks.region : Region;
+import std.experimental.allocator.building_blocks.null_allocator : NullAllocator;
+import std.algorithm : max;
+import std.exception : assumeUnique;
 
-bool wordCompare(WordInfo a, WordInfo b) @safe pure nothrow
+struct WordInfo
 {
-    if (a[1] > b[1]) return true;
-    if (a[1] == b[1] && a[0] < b[0]) return true;
-    return false;
+    string word;
+    int count;
+
+    int opCmp(const WordInfo other) @safe pure nothrow const
+    {
+        if (this.count < other.count) return 1;
+        else if (this.count > other.count) return -1;
+        else if (this.word > other.word) return 1;
+        // this.word != other.word
+        else return -1;
+    }
 }
 
-int main()
+void main()
 {
-    WordInfo[string] tuples;
+    auto batchAllocator = AllocatorList!(
+        (size_t n) => Region!Mallocator(max(n, 1024 * 1024)),
+        NullAllocator,
+    )();
 
-    foreach(line; stdin.byLine(KeepTerminator.no))
+    WordInfo[string] words;
+
+    foreach (line; stdin.byLine(KeepTerminator.no))
     {
-        foreach(char[] word; line.splitter!(a => " \t".canFind(a)))
+        foreach (word; line.splitter!(a => a == ' ' || a == '\t')) if (word.length > 0)
         {
-            if (word.length == 0) continue;
-            if(auto count = word in tuples)
+            if (auto count = word in words)
             {
-                (*count)[1] += 1;
-            } else {
-                auto id = word.idup;
-                tuples[id] = WordInfo(id, 1);
+                (*count).count += 1;
+            }
+            else
+            {
+                auto id = batchAllocator.makeArray!char(word.byChar).assumeUnique();
+                words[id] = WordInfo(id, 1);
             }
         }
     }
 
-    foreach (word; sort!(wordCompare)(tuples.values))
+    foreach (word; words.values.sort())
     {
-        writefln("%s\t%s", word[0], word[1]);
+        writeln(word.word, '\t', word.count);
     }
-
-    return 0;
 }
