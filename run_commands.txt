@@ -3,7 +3,8 @@ c/wordcount
 cpp/wordcount
 cpp/wordcount_clang
 cpp/wordcount_baseline
-d/wordcount
+d/wordcount_dmd
+d/wordcount_ldc2
 elixir/wordcount
 go/bin/wordcount
 haskell/WordCount

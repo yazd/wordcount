@@ -9,7 +9,8 @@ cd ../c
 gcc wordcount.c -o wordcount -O3 -Wall
 
 cd ../d
-ldc2 -O3 -release -inline -boundscheck=off wordcount.d
+dmd -O -release -inline -boundscheck=off -ofwordcount_dmd wordcount.d
+ldc2 -O3 -release -inline -boundscheck=off -ofwordcount_ldc2 wordcount.d
 
 cd ../java
 javac WordCountBaseline.java
